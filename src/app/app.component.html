@@ -113,6 +113,7 @@
             <span class="listing-date" *ngIf="result.listing.listedDate">Listed {{ result.listing.listedDate | date:'MMM d, y' }}</span>
           </div>
           <h3>{{ result.listing.address || 'Address not provided' }}</h3>
+          <p class="listing-city" *ngIf="result.listing.city">{{ result.listing.city }}</p>
           <p class="listing-price">{{ result.listing.price | currency:'USD':'symbol':'1.0-0' }}</p>
           <div class="listing-facts">
             <span><strong>{{ result.listing.bedrooms }}</strong> beds</span>

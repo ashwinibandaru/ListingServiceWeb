@@ -16,7 +16,9 @@ The Angular development server forwards `/api` requests to the backend using `pr
 
 The search form supports city, description keyword, minimum/maximum price, minimum bedrooms, target budget, and page size (1–100). Invalid price ranges, negative values, and invalid page sizes are blocked before making a request. Page navigation retains the backend's relevance-ranked results, and the returned score is shown alongside each listing.
 
-The backend is responsible for matching and ranking: it receives `targetBudget` and returns scored listings ordered by relevance. The UI displays that score and labels its budget/recency context without reimplementing backend ranking logic.
+City filtering uses the listing's dedicated `city` field rather than attempting to match a city name inside the street address. The backend model exposes that field from `sample_listings.json`, and the UI also displays it with each listing.
+
+The backend ranks matches with a weighted budget-proximity and recency score. Budget proximity is `1 - min(abs(price - targetBudget) / targetBudget, 1)` when a positive target budget is supplied (otherwise it defaults to 0.5). Recency is `1 - min(daysSinceListed / maxRecencyDays, 1)`, with future listing dates treated as today. The defaults weight budget at 0.6, recency at 0.4, and use a 365-day recency window. The API sorts by descending score, then newest listing date; the frontend displays the returned score and preserves that ordering across pages.
 
 ## Commands
 

@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { ListingSearchService } from './listing-search.service';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 
 describe('AppComponent', () => {
   const listingSearch = jasmine.createSpyObj<ListingSearchService>('ListingSearchService', ['search']);
@@ -48,5 +49,27 @@ describe('AppComponent', () => {
     fixture.componentInstance.submitSearch();
     expect(listingSearch.search).not.toHaveBeenCalled();
     expect(fixture.componentInstance.searchForm.controls.pageSize.hasError('min')).toBeTrue();
+  });
+
+  it('shows the backend validation message from its error response', () => {
+    listingSearch.search.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 400,
+      statusText: 'Bad Request',
+      error: { error: 'pageSize must be >= 1' }
+    })));
+
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.errorMessage).toBe('pageSize must be >= 1');
+    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain('pageSize must be >= 1');
+  });
+
+  it('shows a no-results state when the search returns no listings', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.hasSearched).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('No homes found just yet');
   });
 });

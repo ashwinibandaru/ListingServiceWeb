@@ -2,6 +2,7 @@ export interface Listing {
   id: string | null;
   source: string | null;
   address: string | null;
+  city: string | null;
   price: number;
   bedrooms: number;
   bathrooms: number;

@@ -139,12 +139,12 @@ export class AppComponent implements OnInit {
       return 'The listing service could not be reached. Check that the backend is running and try again.';
     }
 
-    const body = error.error as { detail?: unknown; title?: unknown; message?: unknown } | string | null;
+    const body = error.error as { detail?: unknown; title?: unknown; message?: unknown; error?: unknown } | string | null;
     if (typeof body === 'string' && body.trim()) {
       return body;
     }
     if (body && typeof body === 'object') {
-      const detail = body.detail ?? body.title ?? body.message;
+      const detail = body.detail ?? body.title ?? body.message ?? body.error;
       if (typeof detail === 'string' && detail.trim()) {
         return detail;
       }
