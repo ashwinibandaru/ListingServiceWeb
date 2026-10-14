@@ -1,0 +1,149 @@
+<main class="page-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Haven home">
+      <span class="brand-mark" aria-hidden="true">H</span>
+      <span>haven<span class="brand-light"> / listings</span></span>
+    </a>
+    <span class="topbar-note"><span class="live-dot"></span> Connected to live listing feeds</span>
+  </header>
+
+  <section class="intro">
+    <p class="eyebrow">A clearer way home</p>
+    <h1>Find a place<br><span>that feels like yours.</span></h1>
+    <p class="intro-copy">Search across listing feeds and surface the homes that fit your budget, needs, and timing.</p>
+  </section>
+
+  <section class="search-panel" aria-labelledby="search-heading">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Your search</p>
+        <h2 id="search-heading">Tell us what matters</h2>
+      </div>
+      <span class="panel-step">01 <span>/ 01</span></span>
+    </div>
+
+    <form [formGroup]="searchForm" (ngSubmit)="submitSearch()" novalidate>
+      <div class="filters-grid">
+        <label class="field">
+          <span>City</span>
+          <input type="text" formControlName="city" placeholder="Any city" autocomplete="address-level2">
+        </label>
+        <label class="field">
+          <span>Keyword in description</span>
+          <input type="search" formControlName="keyword" placeholder="e.g. fenced yard">
+        </label>
+        <label class="field">
+          <span>Minimum price</span>
+          <span class="input-affix"><span>$</span><input type="number" formControlName="minPrice" min="0" step="10000" placeholder="No minimum"></span>
+        </label>
+        <label class="field">
+          <span>Maximum price</span>
+          <span class="input-affix"><span>$</span><input type="number" formControlName="maxPrice" min="0" step="10000" placeholder="No maximum"></span>
+        </label>
+        <label class="field">
+          <span>Minimum bedrooms</span>
+          <input type="number" formControlName="minBedrooms" min="0" step="1" placeholder="Any">
+        </label>
+        <label class="field">
+          <span>Target budget <span class="field-hint">used for relevance</span></span>
+          <span class="input-affix"><span>$</span><input type="number" formControlName="targetBudget" min="0" step="10000" placeholder="Your ideal budget"></span>
+        </label>
+      </div>
+
+      <div class="form-footer">
+        <div class="form-feedback" aria-live="polite">
+          <p class="validation-message" *ngIf="searchForm.hasError('priceRange')">Minimum price must be less than or equal to maximum price.</p>
+          <p class="validation-message" *ngIf="searchForm.controls.minPrice.hasError('min') || searchForm.controls.maxPrice.hasError('min') || searchForm.controls.targetBudget.hasError('min')">Prices cannot be negative.</p>
+          <p class="validation-message" *ngIf="searchForm.controls.minBedrooms.hasError('min')">Bedrooms cannot be negative.</p>
+          <p class="validation-message" *ngIf="searchForm.controls.minBedrooms.hasError('pattern')">Bedrooms must be a whole number.</p>
+          <p class="validation-message" *ngIf="searchForm.controls.pageSize.hasError('min') || searchForm.controls.pageSize.hasError('max') || searchForm.controls.pageSize.hasError('required') || searchForm.controls.pageSize.hasError('pattern')">Page size must be a whole number from 1 to 100.</p>
+        </div>
+        <div class="form-actions">
+          <label class="page-size-control">
+            <span>Per page</span>
+            <input type="number" formControlName="pageSize" min="1" max="100" step="1" aria-label="Results per page">
+          </label>
+          <button class="search-button" type="submit" [disabled]="loading">
+            <span *ngIf="!loading">Search homes <span aria-hidden="true">→</span></span>
+            <span *ngIf="loading" class="button-loading"><span class="spinner"></span> Searching</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="results-section" aria-labelledby="results-heading">
+    <div class="results-header">
+      <div>
+        <p class="eyebrow">The shortlist</p>
+        <h2 id="results-heading">Homes worth a closer look</h2>
+      </div>
+      <p class="results-summary" *ngIf="!loading && !errorMessage && total > 0">
+        <strong>{{ total }}</strong> {{ total === 1 ? 'home' : 'homes' }} found
+        <span class="summary-divider">·</span> Sorted by relevance
+      </p>
+    </div>
+
+    <div class="state-card loading-state" *ngIf="loading" role="status">
+      <span class="spinner spinner-dark"></span>
+      <span>Finding homes that fit your search…</span>
+    </div>
+
+    <div class="state-card error-state" *ngIf="!loading && errorMessage" role="alert">
+      <span class="state-icon" aria-hidden="true">!</span>
+      <div><strong>We couldn't load listings</strong><p>{{ errorMessage }}</p></div>
+      <button class="retry-button" type="button" (click)="submitSearch()">Try again</button>
+    </div>
+
+    <div class="state-card empty-state" *ngIf="!loading && !errorMessage && hasSearched && total === 0">
+      <span class="empty-spark" aria-hidden="true">✳</span>
+      <h3>No homes found just yet</h3>
+      <p>Try another city, widen your price range, or use a different keyword.</p>
+    </div>
+
+    <div class="listing-list" *ngIf="!loading && !errorMessage && listings.length > 0">
+      <article class="listing-card" *ngFor="let result of listings; trackBy: trackListing">
+        <div class="listing-art" aria-hidden="true">
+          <span class="art-sun"></span><span class="art-roof"></span><span class="art-house"></span><span class="art-window"></span><span class="art-door"></span><span class="art-ground"></span>
+          <span class="source-tag">{{ result.listing.source }}</span>
+        </div>
+        <div class="listing-details">
+          <div class="listing-topline">
+            <span class="status-pill" [class.status-pending]="result.listing.status?.toLowerCase() === 'pending'" [class.status-sold]="result.listing.status?.toLowerCase() === 'sold'">{{ result.listing.status || 'Listing' }}</span>
+            <span class="listing-date" *ngIf="result.listing.listedDate">Listed {{ result.listing.listedDate | date:'MMM d, y' }}</span>
+          </div>
+          <h3>{{ result.listing.address || 'Address not provided' }}</h3>
+          <p class="listing-price">{{ result.listing.price | currency:'USD':'symbol':'1.0-0' }}</p>
+          <div class="listing-facts">
+            <span><strong>{{ result.listing.bedrooms }}</strong> beds</span>
+            <span class="fact-dot">·</span>
+            <span><strong>{{ result.listing.bathrooms }}</strong> baths</span>
+            <span class="fact-dot">·</span>
+            <span><strong>{{ result.listing.sqft | number }}</strong> sqft</span>
+          </div>
+          <p class="listing-description" *ngIf="result.listing.description">{{ result.listing.description }}</p>
+        </div>
+        <div class="relevance">
+          <span class="relevance-label">Match score</span>
+          <strong>{{ result.score | number:'1.3-3' }}</strong>
+          <span class="score-track"><span [style.width.%]="scorePercent(result.score)"></span></span>
+          <span class="relevance-caption">Budget + recency</span>
+        </div>
+      </article>
+    </div>
+
+    <nav class="pagination" *ngIf="!loading && !errorMessage && total > 0 && searchForm.valid" aria-label="Listing pages">
+      <span class="page-description">Showing {{ rangeStart }}–{{ rangeEnd }} of {{ total }}</span>
+      <div class="page-controls">
+        <button type="button" class="page-button" (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1" aria-label="Previous page">← <span>Previous</span></button>
+        <span class="page-number">Page <strong>{{ currentPage }}</strong> of {{ totalPages }}</span>
+        <button type="button" class="page-button" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages" aria-label="Next page"><span>Next</span> →</button>
+      </div>
+    </nav>
+  </section>
+
+  <footer class="page-footer">
+    <span>HAVEN <span class="footer-divider">/</span> LISTING SEARCH</span>
+    <span>One search. More ways home.</span>
+  </footer>
+</main>
